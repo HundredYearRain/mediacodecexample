@@ -18,6 +18,8 @@
 
 package com.orangelabs.rcs.core;
 
+import java.io.IOException;
+
 import com.orangelabs.rcs.addressbook.AddressBookManager;
 import com.orangelabs.rcs.core.ims.ImsModule;
 import com.orangelabs.rcs.core.ims.service.capability.CapabilityService;
@@ -87,7 +89,12 @@ public class Core {
      */
     public synchronized static Core createCore(CoreListener listener) throws CoreException {
     	if (instance == null) {
-    		instance = new Core(listener);
+    		try {
+				instance = new Core(listener);
+			} catch (IOException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
     	}
     	return instance;
     }
@@ -107,8 +114,9 @@ public class Core {
      * 
 	 * @param listener Listener
      * @throws CoreException
+     * @throws IOException 
      */
-    private Core(CoreListener listener) throws CoreException {
+    private Core(CoreListener listener) throws CoreException, IOException {
 		if (logger.isActivated()) {
         	logger.info("Terminal core initialization");
     	}

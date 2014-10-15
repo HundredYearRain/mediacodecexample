@@ -18,6 +18,7 @@
 
 package com.orangelabs.rcs.core.ims;
 
+import java.io.IOException;
 import java.util.Enumeration;
 
 import com.orangelabs.rcs.core.Core;
@@ -99,8 +100,9 @@ public class ImsModule implements SipEventListener {
      * 
      * @param core Core
      * @throws CoreException 
+     * @throws IOException 
      */
-    public ImsModule(Core core) throws CoreException {
+    public ImsModule(Core core) throws CoreException, IOException {
     	this.core = core;
     	
     	if (logger.isActivated()) {

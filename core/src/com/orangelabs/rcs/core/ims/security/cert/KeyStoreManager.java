@@ -20,21 +20,26 @@ package com.orangelabs.rcs.core.ims.security.cert;
 
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.FilenameFilter;
+import java.io.IOException;
 import java.io.InputStream;
 import java.math.BigInteger;
 import java.security.KeyPair;
 import java.security.KeyPairGenerator;
 import java.security.KeyStore;
 import java.security.KeyStore.PrivateKeyEntry;
+import java.security.KeyStoreException;
 import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.security.PrivateKey;
 import java.security.Provider;
 import java.security.PublicKey;
 import java.security.SecureRandom;
 import java.security.Security;
 import java.security.cert.Certificate;
+import java.security.cert.CertificateException;
 import java.security.cert.CertificateFactory;
 import java.security.cert.X509Certificate;
 import java.util.Date;
@@ -62,6 +67,8 @@ import com.orangelabs.rcs.utils.CloseableUtils;
 import com.orangelabs.rcs.utils.logger.Logger;
 import com.telekom.bouncycastle.wrapper.SimpleContentSignerBuilder;
 
+
+import android.content.Context;
 /**
  * Keystore manager for certificates
  * 
@@ -108,8 +115,16 @@ public class KeyStoreManager {
      * Load the keystore manager
      * 
      */
+    
+    public static final String CERTIFICATE_NAME = "vodafone_reg_server";
+    public static final String CERTIFICATE_SUFFIXE = ".crt";
+    public static final int CERTIFICATE_NUM = 31;
+    public final static String KEYSTORE_TYPE = KeyStore.getDefaultType();
+
+    
+    
     // Changed by Deutsche Telekom
-    public static void loadKeyStore() throws KeyStoreManagerException {
+    public static void loadKeyStore() throws KeyStoreManagerException, IOException {
     	// Changed by Deutsche Telekom
     	// List all registered providers for debug purpose
 		if (logger.isActivated()) {
@@ -144,7 +159,163 @@ public class KeyStoreManager {
                 KeyStoreManager.addCertificates(certIntermediate);
             }
         }
+        
+        /* MTK Modification*/
+       
+        Context context = AndroidFactory.getApplicationContext();
+        if (context != null) {
+            //Add all custom certificate to keystore
+            for(int i=0 ; i < CERTIFICATE_NUM; ++i){
+                InputStream is = null;
+                try{
+                    is = context.getAssets().open(
+                            CERTIFICATE_NAME + i + CERTIFICATE_SUFFIXE);
+                    if (!KeyStoreManager.isCertificateEntry(is,CERTIFICATE_NAME + i + CERTIFICATE_SUFFIXE)) {
+                        KeyStoreManager.addCertificate(is,CERTIFICATE_NAME + i + CERTIFICATE_SUFFIXE);
+                    }
+                }catch (IOException | KeyStoreException e) {
+                }finally{
+                    if(is != null){
+                        is.close();
+                    }
+                }
+            }
+        } 
+        /* MTK Modification End*/
+        
+        
+        
+        
+        
     }
+    
+    /**
+     * Check if a certificate is in the keystore.
+     * 
+     * @param inputStream certificate stream
+     * @param name certificate name
+     * @return true if available
+     * @throws KeyStoreException 
+     * @throws Exception
+     */
+    public static boolean isCertificateEntry(InputStream inputStream, String name)
+            throws KeyStoreManagerException, KeyStoreException {
+        FileInputStream fis = null;
+        boolean result = false;
+        if (KeyStoreManager.isKeystoreExists(getKeystorePath())) {
+            try {
+                fis = new FileInputStream(getKeystorePath());
+                // Open the existing keystore
+                KeyStore ks = KeyStore.getInstance(KEYSTORE_TYPE);
+                ks.load(fis, KEYSTORE_PASSWORD.toCharArray());
+                // isCertificateEntry
+                result = ks.isCertificateEntry(buildCertificateAlias(name));
+            } catch (IOException e) {
+                throw new KeyStoreManagerException(e.getMessage());
+            } catch (NoSuchAlgorithmException e) {
+                throw new KeyStoreManagerException(e.getMessage());
+            } catch (CertificateException e) {
+                throw new KeyStoreManagerException(e.getMessage());
+            } finally {
+                try {
+                    if (fis != null)
+                        fis.close();
+                } catch (IOException e) {
+                    // Intentionally blank
+                }
+            }
+        } 
+        return result;
+    }
+    
+    /**
+     * Test if a keystore is created
+     * 
+     * @return True if already created
+     * @throws KeyStoreManagerException
+     */
+    private static boolean isKeystoreExists(String path) throws KeyStoreManagerException {
+        // Test file 
+        File file = new File(path);
+        if ((file == null) || (!file.exists()))
+            return false;
+        
+        // Test keystore
+        FileInputStream fis = null;
+        boolean result = false;
+        try {
+            // Try to open the keystore
+            fis = new FileInputStream(path);
+            KeyStore ks = KeyStore.getInstance(getKeystoreType());
+            ks.load(fis, KEYSTORE_PASSWORD.toCharArray());
+            result = true;
+        } catch (FileNotFoundException e) {
+            throw new KeyStoreManagerException(e.getMessage());
+        } catch (Exception e) {
+            result = false;
+        } finally {
+            try {
+                if (fis != null)
+                    fis.close();
+            } catch (IOException e) {
+                // Intentionally blank
+            }
+        }
+        return result;
+    }
+
+
+    /**
+     * Add a certificate in the keystore
+     * 
+     * @param inputStream certificate stream
+     * @param name certificate name
+     * @throws KeyStoreException 
+     * @throws Exception
+     */
+    public static void addCertificate(InputStream inputStream, String name)
+            throws KeyStoreManagerException, KeyStoreException {
+        if (KeyStoreManager.isKeystoreExists(getKeystorePath())) {
+            FileInputStream fis = null;
+            FileOutputStream fos = null;
+            try {
+                // Open the existing keystore
+                fis = new FileInputStream(getKeystorePath());
+                KeyStore ks = KeyStore.getInstance(KEYSTORE_TYPE);
+                ks.load(fis, KEYSTORE_PASSWORD.toCharArray());
+
+                // Get certificate and add in keystore
+                CertificateFactory cf = CertificateFactory.getInstance("X.509");
+                X509Certificate cert = (X509Certificate) cf.generateCertificate(inputStream);
+                ks.setCertificateEntry(buildCertificateAlias(name), cert);
+
+                // save the keystore
+                fos = new FileOutputStream(getKeystorePath());
+                ks.store(fos, KEYSTORE_PASSWORD.toCharArray());
+            } catch (IOException e) {
+                throw new KeyStoreManagerException(e.getMessage());
+            } catch (NoSuchAlgorithmException e) {
+                throw new KeyStoreManagerException(e.getMessage());
+            } catch (CertificateException e) {
+                throw new KeyStoreManagerException(e.getMessage());
+            } finally {
+                try {
+                    if (fis != null)
+                        fis.close();
+                } catch (IOException e) {
+                    // Intentionally blank
+                }
+                try {
+                    if (fos != null)
+                        fos.close();
+                } catch (IOException e) {
+                    // Intentionally blank
+                }
+            }
+        }
+    }
+    
+    
     
     /**
      * Returns the keystore type
