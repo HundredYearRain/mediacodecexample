@@ -158,7 +158,9 @@ public class MsrpManager {
 	 * @return Boolean
 	 */
 	public boolean isSecured() {
-		return secured;
+		//mtk33054 TODO make temporarily msrps
+		return true;
+		//return secured;
 	}
 	
 	/**

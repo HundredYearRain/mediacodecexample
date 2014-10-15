@@ -171,8 +171,8 @@ public class RcsSettingsProvider extends ContentProvider {
             addParameter(db, RcsSettingsData.CAPABILITY_RCS_EXTENSIONS,			"");
             addParameter(db, RcsSettingsData.IMS_SERVICE_POLLING_PERIOD, 		"300");
             addParameter(db, RcsSettingsData.SIP_DEFAULT_PORT, 					"5060");
-            addParameter(db, RcsSettingsData.SIP_DEFAULT_PROTOCOL_FOR_MOBILE,   ListeningPoint.UDP);
-            addParameter(db, RcsSettingsData.SIP_DEFAULT_PROTOCOL_FOR_WIFI,     ListeningPoint.TCP);
+            addParameter(db, RcsSettingsData.SIP_DEFAULT_PROTOCOL_FOR_MOBILE,   ListeningPoint.TLS);
+            addParameter(db, RcsSettingsData.SIP_DEFAULT_PROTOCOL_FOR_WIFI,     ListeningPoint.TLS);
             addParameter(db, RcsSettingsData.TLS_CERTIFICATE_ROOT,              "");
             addParameter(db, RcsSettingsData.TLS_CERTIFICATE_INTERMEDIATE,      "");
             addParameter(db, RcsSettingsData.SIP_TRANSACTION_TIMEOUT, 			"120");
@@ -226,7 +226,7 @@ public class RcsSettingsProvider extends ContentProvider {
             addParameter(db, RcsSettingsData.DIRECTORY_PATH_PHOTOS,				Environment.getExternalStorageDirectory() + "/joyn/photos/");
             addParameter(db, RcsSettingsData.DIRECTORY_PATH_VIDEOS,				Environment.getExternalStorageDirectory() + "/joyn/videos/");
             addParameter(db, RcsSettingsData.DIRECTORY_PATH_FILES,				Environment.getExternalStorageDirectory() + "/joyn/files/");
-            addParameter(db, RcsSettingsData.SECURE_MSRP_OVER_WIFI,	     		RcsSettingsData.FALSE);
+            addParameter(db, RcsSettingsData.SECURE_MSRP_OVER_WIFI,	     		RcsSettingsData.TRUE);
             addParameter(db, RcsSettingsData.SECURE_RTP_OVER_WIFI,				RcsSettingsData.FALSE);
             addParameter(db, RcsSettingsData.CONVERGENT_MESSAGING_UX,			RcsSettingsData.TRUE);
             addParameter(db, RcsSettingsData.CAPABILITY_SIP_AUTOMATA, 			RcsSettingsData.FALSE);
